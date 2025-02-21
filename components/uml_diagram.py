@@ -63,8 +63,9 @@ def show_uml_diagram(relationships: Dict):
         # Create tabs for each section
         tabs = st.tabs([f"Section {i+1}" for i in range(len(class_sections))])
 
-        # Initialize PlantUML
-        plantuml_server = plantuml.PlantUML(url='http://www.plantuml.com/plantuml/svg/')
+        # Create PlantUML instance for local rendering
+        output_directory = io.StringIO()
+        puml = plantuml.PlantUML(output_directory=output_directory)
 
         # Create diagram for each section
         for section_idx, (tab, section_classes) in enumerate(zip(tabs, class_sections)):
@@ -94,14 +95,14 @@ def show_uml_diagram(relationships: Dict):
 
                 uml_code.append("@enduml")
 
-                # Generate SVG
-                svg_diagram = plantuml_server.processes('\n'.join(uml_code))
+                # Generate diagram locally
+                diagram = puml.generate_diagram('\n'.join(uml_code), outfile=None)
 
                 # Display SVG with zoom control
                 st.markdown(f"""
                     <div style="width: 100%; overflow: auto;">
                         <div style="width: {zoom_level}%;">
-                            {svg_diagram.decode()}
+                            {diagram.decode()}
                         </div>
                     </div>
                     """, 
