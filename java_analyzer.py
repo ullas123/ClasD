@@ -16,40 +16,6 @@ def main():
     st.markdown("### Developed by Ullas")
     st.write("Upload your Java project files to analyze class relationships and structure")
 
-    # Installation and Usage Guide
-    with st.expander("📚 Installation and Usage Guide", expanded=True):
-        st.markdown("""
-        ### Installation Steps
-        1. **Environment Setup**
-           - Make sure you have Python 3.8 or higher installed
-           - Required Python packages: `streamlit`, `javalang`, `plantuml`, `networkx`, `pandas`, `plotly`
-           - Install dependencies using: `pip install streamlit javalang plantuml networkx pandas plotly`
-
-        2. **Running the Application**
-           - Clone the repository
-           - Navigate to the project directory
-           - Run: `streamlit run java_analyzer.py`
-           - Access the application at `http://localhost:5000`
-
-        ### Usage Instructions
-        1. **File Upload**
-           - Upload individual `.java` files or
-           - Upload a `.zip` file containing your Java project
-           - The analyzer supports both single files and complete projects
-
-        2. **Available Features**
-           - **Project Structure**: View hierarchical file organization
-           - **Class Relationships**: Analyze inheritance and dependencies
-           - **Data Flow**: Examine API endpoints and data connections
-           - **UML Diagram**: Interactive class diagrams with zoom
-           - **Documentation**: Browse Javadoc with quality metrics
-
-        3. **Best Practices**
-           - Ensure Java files have proper package declarations
-           - Include Javadoc comments for better documentation analysis
-           - For large projects, use ZIP upload for better organization
-        """)
-
     # Upload instructions
     st.markdown("""
     ### Upload Instructions:
