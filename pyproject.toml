@@ -8,6 +8,7 @@ dependencies = [
     "javalang>=0.13.0",
     "networkx>=3.4.2",
     "pandas>=2.2.3",
+    "plantuml>=0.3.0",
     "plotly>=6.0.0",
     "streamlit>=1.42.2",
     "trafilatura>=2.0.0",

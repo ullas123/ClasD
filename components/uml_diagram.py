@@ -1,38 +1,33 @@
 import streamlit as st
-import graphviz
 from typing import Dict, List
 import math
+import plantuml
+import io
+import base64
+from typing import Dict, List
 
-def create_class_node(dot, class_info: Dict, cluster_id: int = None) -> None:
+def generate_plantuml_class(class_info: Dict) -> str:
     """
-    Create a UML class node with attributes and methods
+    Generate PlantUML class definition
     """
-    class_name = class_info['name']
-    label = f'<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">\n'
-
-    # Class name
-    label += f'<TR><TD PORT="header"><B>{class_name}</B></TD></TR>\n'
+    uml = []
+    # Class definition
+    if class_info.get('implements'):
+        uml.append(f'class {class_info["name"]} implements {",".join(class_info["implements"])} {{')
+    else:
+        uml.append(f'class {class_info["name"]} {{')
 
     # Fields
-    label += '<TR><TD ALIGN="LEFT" BALIGN="LEFT">'
-    for field in class_info['fields']:
-        label += f'+ {field}<BR/>'
-    label += '</TD></TR>\n'
+    for field in class_info.get('fields', []):
+        uml.append(f'    + {field}')
 
     # Methods
-    label += '<TR><TD ALIGN="LEFT" BALIGN="LEFT">'
-    for method in class_info['methods']:
-        label += f'+ {method}()<BR/>'
-    label += '</TD></TR>\n'
+    for method in class_info.get('methods', []):
+        uml.append(f'    + {method}()')
 
-    label += '</TABLE>>'
+    uml.append('}')
 
-    if cluster_id is not None:
-        with dot.subgraph(name=f'cluster_{cluster_id}') as c:
-            c.attr(label=f'Package {cluster_id}')
-            c.node(class_name, label=label)
-    else:
-        dot.node(class_name, label=label)
+    return '\n'.join(uml)
 
 def split_classes(classes: List[Dict], num_sections: int) -> List[List[Dict]]:
     """
@@ -43,19 +38,19 @@ def split_classes(classes: List[Dict], num_sections: int) -> List[List[Dict]]:
 
 def show_uml_diagram(relationships: Dict):
     """
-    Display UML class diagram with zoom and split functionality
+    Display UML class diagram with interactive zoom functionality
     """
     st.header("UML Class Diagram")
 
-    # Use full width container
     with st.container():
         # Controls for diagram layout
         col1, col2 = st.columns(2)
         with col1:
-            num_sections = st.slider("Split diagram into sections", 1, 4, 1)
+            num_sections = st.slider("Split diagram into sections", 1, 8, 1, 
+                                   help="Split the diagram into multiple sections for better visibility")
         with col2:
-            zoom_level = st.slider("Zoom level", 10, 400, 100, step=10, 
-                                 help="Adjust diagram size (10% to 400%)")
+            zoom_level = st.slider("Zoom level", 50, 400, 100, step=10, 
+                                help="Adjust diagram size (50% to 400%)")
 
         # Get all classes from relationships
         all_classes = []
@@ -68,37 +63,50 @@ def show_uml_diagram(relationships: Dict):
         # Create tabs for each section
         tabs = st.tabs([f"Section {i+1}" for i in range(len(class_sections))])
 
+        # Initialize PlantUML
+        plantuml_server = plantuml.PlantUML(url='http://www.plantuml.com/plantuml/svg/')
+
         # Create diagram for each section
         for section_idx, (tab, section_classes) in enumerate(zip(tabs, class_sections)):
             with tab:
-                # Configure diagram
-                dot = graphviz.Digraph()
-                dot.attr(
-                    rankdir='BT',
-                    size=f"{zoom_level/100:.2f},2.0",  # Fixed height of 100px
-                    ratio='compress',
-                    margin='0',
-                    bgcolor='white'
-                )
+                # Generate PlantUML code
+                uml_code = [
+                    "@startuml", 
+                    "skinparam monochrome true", 
+                    "skinparam shadowing false",
+                    "skinparam classFontSize 14",
+                    "skinparam defaultFontSize 12",
+                    f"title Section {section_idx + 1} - {len(section_classes)} Classes"
+                ]
 
-                # Add class nodes
+                # Add classes
                 for class_info in section_classes:
-                    create_class_node(dot, class_info)
+                    uml_code.append(generate_plantuml_class(class_info))
 
                 # Add relationships
                 for rel in relationships['inheritance']:
                     if any(c['name'] in [rel['from'], rel['to']] for c in section_classes):
-                        dot.edge(rel['from'], rel['to'], arrowhead='empty')
+                        uml_code.append(f"{rel['from']} --|> {rel['to']}")
 
                 for rel in relationships['implementation']:
                     if any(c['name'] in [rel['from'], rel['to']] for c in section_classes):
-                        dot.edge(rel['from'], rel['to'], arrowhead='empty', style='dashed')
+                        uml_code.append(f"{rel['from']} ..|> {rel['to']}")
 
-                # Render diagram with adjusted zoom
-                st.graphviz_chart(
-                    dot,
-                    use_container_width=True
+                uml_code.append("@enduml")
+
+                # Generate SVG
+                svg_diagram = plantuml_server.processes('\n'.join(uml_code))
+
+                # Display SVG with zoom control
+                st.markdown(f"""
+                    <div style="width: 100%; overflow: auto;">
+                        <div style="width: {zoom_level}%;">
+                            {svg_diagram.decode()}
+                        </div>
+                    </div>
+                    """, 
+                    unsafe_allow_html=True
                 )
 
-                # Show section stats
-                st.info(f"Section {section_idx + 1}: {len(section_classes)} classes")
+                # Show section info
+                st.caption(f"Displaying {len(section_classes)} classes in section {section_idx + 1}")
