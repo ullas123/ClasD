@@ -47,48 +47,62 @@ def show_uml_diagram(relationships: Dict):
     """
     st.header("UML Class Diagram")
 
-    # Controls for diagram layout
-    col1, col2 = st.columns(2)
-    with col1:
-        num_sections = st.slider("Split diagram into sections", 1, 4, 1)
-    with col2:
-        zoom_level = st.slider("Zoom level", 50, 200, 100)
+    # Use full width container
+    with st.container():
+        # Controls for diagram layout
+        col1, col2 = st.columns(2)
+        with col1:
+            num_sections = st.slider("Split diagram into sections", 1, 4, 1)
+        with col2:
+            zoom_level = st.slider("Zoom level", 50, 200, 100)
 
-    # Get all classes from relationships
-    all_classes = []
-    for file_data in relationships.get('parsed_data', {}).values():
-        all_classes.extend(file_data.get('classes', []))
+        # Get all classes from relationships
+        all_classes = []
+        for file_data in relationships.get('parsed_data', {}).values():
+            all_classes.extend(file_data.get('classes', []))
 
-    # Split classes into sections
-    class_sections = split_classes(all_classes, num_sections)
+        # Split classes into sections
+        class_sections = split_classes(all_classes, num_sections)
 
-    # Create tabs for each section
-    tabs = st.tabs([f"Section {i+1}" for i in range(len(class_sections))])
+        # Create tabs for each section
+        tabs = st.tabs([f"Section {i+1}" for i in range(len(class_sections))])
 
-    # Create diagram for each section
-    for section_idx, (tab, section_classes) in enumerate(zip(tabs, class_sections)):
-        with tab:
-            dot = graphviz.Digraph()
-            dot.attr(rankdir='BT')
+        # Create diagram for each section
+        for section_idx, (tab, section_classes) in enumerate(zip(tabs, class_sections)):
+            with tab:
+                # Configure diagram
+                dot = graphviz.Digraph()
+                dot.attr(
+                    rankdir='BT',
+                    size=f"{zoom_level/100:.2f},8.0",  # Set fixed height ratio
+                    ratio='fill',
+                    margin='0',
+                    bgcolor='white'
+                )
 
-            # Add class nodes
-            for class_info in section_classes:
-                create_class_node(dot, class_info)
+                # Add class nodes
+                for class_info in section_classes:
+                    create_class_node(dot, class_info)
 
-            # Add relationships
-            for rel in relationships['inheritance']:
-                if any(c['name'] in [rel['from'], rel['to']] for c in section_classes):
-                    dot.edge(rel['from'], rel['to'], arrowhead='empty')
+                # Add relationships
+                for rel in relationships['inheritance']:
+                    if any(c['name'] in [rel['from'], rel['to']] for c in section_classes):
+                        dot.edge(rel['from'], rel['to'], arrowhead='empty')
 
-            for rel in relationships['implementation']:
-                if any(c['name'] in [rel['from'], rel['to']] for c in section_classes):
-                    dot.edge(rel['from'], rel['to'], arrowhead='empty', style='dashed')
+                for rel in relationships['implementation']:
+                    if any(c['name'] in [rel['from'], rel['to']] for c in section_classes):
+                        dot.edge(rel['from'], rel['to'], arrowhead='empty', style='dashed')
 
-            # Apply zoom
-            dot.attr(size=f"{zoom_level/100:.2f},0")
+                # Apply zoom and render with custom height
+                st.write(
+                    f'<div style="min-height: 600px;">',
+                    unsafe_allow_html=True
+                )
+                st.graphviz_chart(
+                    dot,
+                    use_container_width=True
+                )
+                st.write('</div>', unsafe_allow_html=True)
 
-            # Render diagram
-            st.graphviz_chart(dot)
-
-            # Show section stats
-            st.info(f"Section {section_idx + 1}: {len(section_classes)} classes")
+                # Show section stats
+                st.info(f"Section {section_idx + 1}: {len(section_classes)} classes")
