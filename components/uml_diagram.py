@@ -54,7 +54,8 @@ def show_uml_diagram(relationships: Dict):
         with col1:
             num_sections = st.slider("Split diagram into sections", 1, 4, 1)
         with col2:
-            zoom_level = st.slider("Zoom level", 50, 200, 100)
+            zoom_level = st.slider("Zoom level", 10, 400, 100, step=10, 
+                                 help="Adjust diagram size (10% to 400%)")
 
         # Get all classes from relationships
         all_classes = []
@@ -74,8 +75,8 @@ def show_uml_diagram(relationships: Dict):
                 dot = graphviz.Digraph()
                 dot.attr(
                     rankdir='BT',
-                    size=f"{zoom_level/100:.2f},8.0",  # Set fixed height ratio
-                    ratio='fill',
+                    size=f"{zoom_level/100:.2f},2.0",  # Fixed height of 100px
+                    ratio='compress',
                     margin='0',
                     bgcolor='white'
                 )
@@ -93,16 +94,11 @@ def show_uml_diagram(relationships: Dict):
                     if any(c['name'] in [rel['from'], rel['to']] for c in section_classes):
                         dot.edge(rel['from'], rel['to'], arrowhead='empty', style='dashed')
 
-                # Apply zoom and render with custom height
-                st.write(
-                    f'<div style="min-height: 600px;">',
-                    unsafe_allow_html=True
-                )
+                # Render diagram with adjusted zoom
                 st.graphviz_chart(
                     dot,
                     use_container_width=True
                 )
-                st.write('</div>', unsafe_allow_html=True)
 
                 # Show section stats
                 st.info(f"Section {section_idx + 1}: {len(section_classes)} classes")
