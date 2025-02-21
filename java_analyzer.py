@@ -13,6 +13,7 @@ def main():
     st.set_page_config(page_title="Java Code Analyzer", layout="wide")
 
     st.title("Java Code Analyzer")
+    st.markdown("### Developed by Ullas")
     st.write("Upload your Java project files to analyze class relationships and structure")
 
     # Upload instructions
