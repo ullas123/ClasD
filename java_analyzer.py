@@ -7,6 +7,7 @@ from components.project_structure import show_project_structure
 from components.class_relationships import show_class_relationships
 from components.data_flow import show_data_flow
 from components.uml_diagram import show_uml_diagram
+from components.code_documentation import show_code_documentation
 
 def main():
     st.set_page_config(page_title="Java Code Analyzer", layout="wide")
@@ -50,11 +51,12 @@ def main():
                 relationships = analyze_relationships(parsed_data)
 
                 # Create tabs for different views
-                tab1, tab2, tab3, tab4 = st.tabs([
+                tab1, tab2, tab3, tab4, tab5 = st.tabs([
                     "Project Structure", 
                     "Class Relationships", 
                     "Data Flow",
-                    "UML Diagram"
+                    "UML Diagram",
+                    "Documentation"
                 ])
 
                 with tab1:
@@ -68,6 +70,9 @@ def main():
 
                 with tab4:
                     show_uml_diagram(relationships)
+
+                with tab5:
+                    show_code_documentation(parsed_data)
 
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
